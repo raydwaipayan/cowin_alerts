@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -35,6 +36,11 @@ func main() {
 		}
 	}
 
-	fmt.Println("Starting cowin alerts server on port 8080")
-	fasthttp.ListenAndServe(":8080", requestHandler)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	fmt.Printf("Starting cowin alerts server on port %s\n", port)
+	fasthttp.ListenAndServe(fmt.Sprintf(":%s", port), requestHandler)
 }
