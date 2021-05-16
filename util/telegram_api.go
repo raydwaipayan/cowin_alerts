@@ -206,8 +206,9 @@ func showHelp(firstname string, chatid int64) error {
 
 func showStart(firstname string, chatid int64) error {
 	msg := "Get alerted about vaccine availability in your area."
-	msg = "\nThe bot runs every five minutes and shall alert you in case slots are available"
-	msg = "\n\nTo view the commands list type /help"
+	msg += "\nThe bot runs every five minutes and shall alert you in case slots are available"
+	msg += "\n\nTo start type:\n/register [Your pincode]"
+	msg += "\n\nTo view all the commands supported type:\n/help"
 	sendMessage(firstname, chatid, msg)
 	return nil
 }
