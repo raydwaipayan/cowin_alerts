@@ -102,7 +102,7 @@ func registerUser(firstname string, pincode int, chatid int64) error {
 	}
 
 	err = json.Unmarshal(resp.Body(), &pindata)
-	if err != nil {
+	if err != nil || len(pindata) == 0 || len(pindata[0].Postoffice) == 0 {
 		return err
 	}
 	fasthttp.ReleaseResponse(resp)
