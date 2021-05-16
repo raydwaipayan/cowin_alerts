@@ -72,8 +72,6 @@ func doRequest(url string) (*fasthttp.Response, error) {
 }
 
 func sendMessage(firstname string, chatid int64, text string) error {
-	log.Printf("Sending message to user %s with chatid %d: %s\n", firstname, chatid, text)
-
 	url := "https://api.telegram.org/bot" + os.Getenv("BOT_TOKEN") + "/sendMessage"
 	data := Response{
 		ChatId: chatid,
@@ -177,12 +175,18 @@ func SendUpdates() error {
 	dateStr := currentTime.Format("02-01-2006")
 
 	for _, entry := range entries {
+		if !db.ShouldAlert(entry.Chatid, entry.Pincode) {
+			continue
+		}
 		msg := getMsgForPin(entry.Pincode, dateStr)
 		if msg != "" {
 			msg = fmt.Sprintf("SLOTS AVAILABLE FOR PIN %d\n\n", entry.Pincode) + msg
 			err = sendMessage(entry.FirstName, entry.Chatid, msg)
 			if err != nil {
 				log.Printf("Fatal: Couldn't send updates to user: %s\n", entry.FirstName)
+			} else {
+				log.Printf("Sent updates for user: %s with pin %d", entry.FirstName, entry.Pincode)
+				db.UpdateAlerted(entry.Chatid, entry.Pincode)
 			}
 		} else {
 			log.Printf("No entries found for pin: %d\n", entry.Pincode)
