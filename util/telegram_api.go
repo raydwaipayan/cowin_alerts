@@ -98,6 +98,7 @@ func registerUser(firstname string, pincode int, chatid int64) error {
 	pindata := []Pincode{}
 	resp, err := doRequest(fmt.Sprintf("https://api.postalpincode.in/pincode/%d", pincode))
 	if err != nil {
+		sendMessage(firstname, chatid, "Invalid pincode")
 		return err
 	}
 
