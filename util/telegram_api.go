@@ -224,6 +224,10 @@ func ReceiveWebhook(ctx *fasthttp.RequestCtx) error {
 	chatid := update.Message.Chat.Id
 
 	params := strings.Fields(message)
+	if len(params) == 0 {
+		sendMessage(firstname, chatid, "Invalid command")
+	}
+
 	switch params[0] {
 	case "/register":
 		if len(params) >= 2 {
