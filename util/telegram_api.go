@@ -226,6 +226,7 @@ func ReceiveWebhook(ctx *fasthttp.RequestCtx) error {
 	params := strings.Fields(message)
 	if len(params) == 0 {
 		sendMessage(firstname, chatid, "Invalid command")
+		return nil
 	}
 
 	switch params[0] {
