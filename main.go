@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -13,7 +14,17 @@ import (
 func main() {
 	godotenv.Load()
 
-	ticker := time.NewTicker(5 * time.Second)
+	interval := time.Duration(300)
+	interval_string := os.Getenv("CHECK_INTERVAL")
+
+	if interval_string != "" {
+		i, err := strconv.Atoi(interval_string)
+		if err == nil {
+			interval = time.Duration(i)
+		}
+	}
+
+	ticker := time.NewTicker(interval * time.Second)
 	quit := make(chan struct{})
 	go func() {
 		for {
