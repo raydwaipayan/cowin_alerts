@@ -199,11 +199,18 @@ func showHelp(firstname string, chatid int64) error {
 	msg := "Options:\n/register PINCODE - Register alerts for the given pin"
 	msg += "\n/list - List all pincodes registered"
 	msg += "\n/disable - Disable all alerts"
-	msg += "\n/status PINCODE- Get vaccine status immediately for a pin (please note that the bot automatically checks the status every 5 minutes"
+	msg += "\n/status PINCODE - Get vaccine status immediately for a pin"
 	sendMessage(firstname, chatid, msg)
 	return nil
 }
 
+func showStart(firstname string, chatid int64) error {
+	msg := "Get alerted about vaccine availability in your area."
+	msg = "\nThe bot runs every five minutes and shall alert you in case slots are available"
+	msg = "\n\nTo view the commands list type /help"
+	sendMessage(firstname, chatid, msg)
+	return nil
+}
 func ReceiveWebhook(ctx *fasthttp.RequestCtx) error {
 	var update Update
 	err := json.Unmarshal(ctx.PostBody(), &update)
@@ -274,6 +281,8 @@ func ReceiveWebhook(ctx *fasthttp.RequestCtx) error {
 		}
 	case "/help":
 		showHelp(firstname, chatid)
+	case "/start":
+		showStart(firstname, chatid)
 	default:
 		msg := "Invalid command."
 		sendMessage(firstname, chatid, msg)
