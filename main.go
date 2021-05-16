@@ -3,11 +3,14 @@ package main
 import (
 	"fmt"
 
+	"github.com/joho/godotenv"
 	"github.com/raydwaipayan/cowin_alerts/util"
 	"github.com/valyala/fasthttp"
 )
 
 func main() {
+	godotenv.Load()
+
 	requestHandler := func(ctx *fasthttp.RequestCtx) {
 		switch string(ctx.Path()) {
 		case "/":
