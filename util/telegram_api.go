@@ -103,7 +103,9 @@ func registerUser(firstname string, pincode int, chatid int64) error {
 	}
 
 	err = json.Unmarshal(resp.Body(), &pindata)
-	if err != nil || len(pindata) == 0 || len(pindata[0].Postoffice) == 0 {
+	if err != nil || len(pindata) == 0 ||
+		pindata[0].Status != "Success" ||
+		len(pindata[0].Postoffice) == 0 {
 		sendMessage(firstname, chatid, "Invalid pincode")
 		return err
 	}
