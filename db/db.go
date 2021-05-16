@@ -29,6 +29,15 @@ func init() {
 	}
 }
 
+func GetAllEntries() ([]UserEntry, error) {
+	var entries []UserEntry
+	err := db.All(&entries)
+	if err == storm.ErrNotFound {
+		return entries, nil
+	}
+	return entries, err
+}
+
 func GetUserEntries(chatid int64) ([]UserEntry, error) {
 	var entries []UserEntry
 	err := db.Find("Chatid", chatid, &entries)

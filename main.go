@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/raydwaipayan/cowin_alerts/util"
@@ -10,6 +11,20 @@ import (
 
 func main() {
 	godotenv.Load()
+
+	ticker := time.NewTicker(5 * time.Second)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				util.SendUpdates()
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
 
 	requestHandler := func(ctx *fasthttp.RequestCtx) {
 		switch string(ctx.Path()) {

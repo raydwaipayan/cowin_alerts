@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/raydwaipayan/cowin_alerts/db"
 	"github.com/valyala/fasthttp"
@@ -147,10 +148,54 @@ func removeEntries(firstname string, chatid int64) error {
 	return nil
 }
 
+func getMsgForPin(pincode int, dateStr string) string {
+	centers, _ := getCenters(pincode, dateStr)
+	msg := ""
+
+	for _, center := range centers {
+		msg += fmt.Sprintf("CENTER: %s\nAddress: %s\n", center.Name, center.Address)
+		for _, session := range center.Sessions {
+			msg += fmt.Sprintf("\n\tDate: %s", session.Date)
+			msg += fmt.Sprintf("\n\tSlots available: %d", session.Available)
+			msg += fmt.Sprintf("\n\tAge Limit: %d", session.AgeLimit)
+			msg += fmt.Sprintf("\n\tVaccine type: %s", session.Vaccine)
+			msg += "\n"
+		}
+		msg += "-----------------------------------\n\n"
+	}
+	return msg
+}
+
+func SendUpdates() error {
+	entries, err := db.GetAllEntries()
+	if err != nil {
+		log.Print("Fatal: Couldn't load db entries")
+		return err
+	}
+
+	currentTime := time.Now()
+	dateStr := currentTime.Format("02-01-2006")
+
+	for _, entry := range entries {
+		msg := getMsgForPin(entry.Pincode, dateStr)
+		if msg != "" {
+			msg = fmt.Sprintf("SLOTS AVAILABLE FOR PIN %d\n\n", entry.Pincode) + msg
+			err = sendMessage(entry.FirstName, entry.Chatid, msg)
+			if err != nil {
+				log.Printf("Fatal: Couldn't send updates to user: %s\n", entry.FirstName)
+			}
+		} else {
+			log.Printf("No entries found for pin: %d\n", entry.Pincode)
+		}
+	}
+	return nil
+}
+
 func showHelp(firstname string, chatid int64) error {
-	msg := "Options:\n/register [PINCODE] - Register alerts for the given pin"
+	msg := "Options:\n/register PINCODE - Register alerts for the given pin"
 	msg += "\n/list - List all pincodes registered"
 	msg += "\n/disable - Disable all alerts"
+	msg += "\n/status PINCODE- Get vaccine status immediately for a pin (please note that the bot automatically checks the status every 5 minutes"
 	sendMessage(firstname, chatid, msg)
 	return nil
 }
@@ -172,7 +217,7 @@ func ReceiveWebhook(ctx *fasthttp.RequestCtx) error {
 		if len(params) >= 2 {
 			i, err := strconv.Atoi(params[1])
 			if err != nil {
-				msg := "Invalid pincode"
+				msg := "Invalid pincode.\nUsage: /register PINCODE\n"
 				sendMessage(firstname, chatid, msg)
 				break
 			}
@@ -197,10 +242,36 @@ func ReceiveWebhook(ctx *fasthttp.RequestCtx) error {
 			msg := "An unexpected error has occured. Please try again later"
 			sendMessage(firstname, chatid, msg)
 		}
+	case "/status":
+		if len(params) >= 2 {
+			i, err := strconv.Atoi(params[1])
+			if err != nil {
+				msg := "Invalid pincode"
+				sendMessage(firstname, chatid, msg)
+				break
+			}
+			currentTime := time.Now()
+			dateStr := currentTime.Format("02-01-2006")
+			msg := getMsgForPin(i, dateStr)
+
+			if msg == "" {
+				msg = "No vaccine slots found for the given pincode"
+			} else {
+				msg = "Found vaccine slots:\n\n" + msg
+			}
+			err = sendMessage(firstname, chatid, msg)
+			if err != nil {
+				msg := "An unexpected error has occured. Please try again later"
+				sendMessage(firstname, chatid, msg)
+			}
+		} else {
+			msg := "Invalid pincode.\nUsage: /status PINCODE\n"
+			sendMessage(firstname, chatid, msg)
+		}
 	case "/help":
 		showHelp(firstname, chatid)
 	default:
-		msg := "Invalid command\n"
+		msg := "Invalid command."
 		sendMessage(firstname, chatid, msg)
 	}
 
