@@ -44,7 +44,7 @@ func getCenters(pincode int, date string) ([]Center, error) {
 	for _, center := range data.Centers {
 		sessions := []Session{}
 		for _, session := range center.Sessions {
-			if session.Available > 0 {
+			if session.Available > 0 && session.AgeLimit < 45 {
 				sessions = append(sessions, session)
 			}
 		}
