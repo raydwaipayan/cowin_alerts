@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"strconv"
+
+	"github.com/joho/godotenv"
 )
 
 type Session struct {
@@ -24,6 +28,17 @@ type CenterData struct {
 }
 
 var apifmtstring string = "https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByPin?pincode=%d&date=%s"
+var ageLimit int = 25
+
+func init() {
+	godotenv.Load()
+	ageString := os.Getenv("AGE_LIMIT")
+
+	i, err := strconv.Atoi(ageString)
+	if err == nil {
+		ageLimit = i
+	}
+}
 
 func getCenters(pincode int, date string) ([]Center, error) {
 	url := fmt.Sprintf(apifmtstring, pincode, date)
@@ -44,7 +59,7 @@ func getCenters(pincode int, date string) ([]Center, error) {
 	for _, center := range data.Centers {
 		sessions := []Session{}
 		for _, session := range center.Sessions {
-			if session.Available > 0 && session.AgeLimit < 45 {
+			if session.Available > 0 && session.AgeLimit <= ageLimit {
 				sessions = append(sessions, session)
 			}
 		}

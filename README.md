@@ -11,4 +11,5 @@ DATA_DIR=           # Directory to store bolt db
 PORT=               # Port to run server on
 CHECK_INTERVAL=     # Interval (in seconds) to query cowin api
 ALERT_DURATION=     # Time between successful alerts for a pin
+AGE_LIMIT=          # Age limit below which it should alert user
 ```
