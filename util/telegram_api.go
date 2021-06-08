@@ -213,6 +213,8 @@ func showStart(firstname string, chatid int64) error {
 	msg += "\nThe bot runs every five minutes and shall alert you in case slots are available"
 	msg += "\n\nTo start type:\n/register [Your pincode]"
 	msg += "\n\nTo view all the commands supported type:\n/help"
+	msg += "\n\nPlease note that this bot is only for those whom Dwai knows."
+	msg += "\nI might remove anyone else from database if the bot starts to get rate limited."
 	sendMessage(firstname, chatid, msg)
 	return nil
 }
