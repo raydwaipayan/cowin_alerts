@@ -17,6 +17,8 @@ type UserEntry struct {
 	Chatid    int64 `storm:"index"`
 	FirstName string
 	Pincode   int
+	// Dose - 0 for both, 1 for first dose, 2 for second
+	Dose int
 }
 
 type Alerted struct {
@@ -85,6 +87,7 @@ func AddUserEntry(firstname string, pincode int, chatid int64) error {
 			Chatid:    chatid,
 			Pincode:   pincode,
 			FirstName: firstname,
+			Dose:      0,
 		}
 		err = db.Save(&entry)
 		if err != nil {
@@ -95,6 +98,18 @@ func AddUserEntry(firstname string, pincode int, chatid int64) error {
 	}
 
 	return nil
+}
+
+func UpdateUserEntry(firstname string, chatid int64, pincode int, dose int) error {
+	query := db.Select(q.Eq("Chatid", chatid), q.Eq("Pincode", pincode))
+	var entry UserEntry
+	err := query.First(&entry)
+
+	if err != nil {
+		return err
+	}
+
+	return db.UpdateField(&entry, "Dose", dose)
 }
 
 func UpdateAlerted(chatid int64, pincode int) error {

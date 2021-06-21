@@ -11,10 +11,12 @@ import (
 )
 
 type Session struct {
-	Date      string `json:"date"`
-	Available int    `json:"available_capacity"`
-	AgeLimit  int    `json:"min_age_limit"`
-	Vaccine   string `json:"vaccine"`
+	Date       string `json:"date"`
+	Available  int    `json:"available_capacity"`
+	Available1 int    `json:"available_capacity_dose1"`
+	Available2 int    `json:"available_capacity_dose2"`
+	AgeLimit   int    `json:"min_age_limit"`
+	Vaccine    string `json:"vaccine"`
 }
 
 type Center struct {
@@ -40,7 +42,7 @@ func init() {
 	}
 }
 
-func getCenters(pincode int, date string) ([]Center, error) {
+func getCenters(pincode int, date string, dose int) ([]Center, error) {
 	url := fmt.Sprintf(apifmtstring, pincode, date)
 	resp, err := doRequest(url)
 	if err != nil {
@@ -60,7 +62,11 @@ func getCenters(pincode int, date string) ([]Center, error) {
 		sessions := []Session{}
 		for _, session := range center.Sessions {
 			if session.Available > 0 && session.AgeLimit <= ageLimit {
-				sessions = append(sessions, session)
+				if dose == 0 ||
+					(dose == 1 && session.Available1 > 0) ||
+					(dose == 2 && session.Available2 > 0) {
+					sessions = append(sessions, session)
+				}
 			}
 		}
 		if len(sessions) > 0 {

@@ -132,6 +132,14 @@ func listEntries(firstname string, chatid int64) error {
 	msg := "You have registered alerts for the following pincodes:"
 	for _, entry := range entries {
 		msg += "\n" + fmt.Sprint(entry.Pincode)
+		switch entry.Dose {
+		case 0:
+			msg += "\t[Dose: Both]"
+		case 1:
+			msg += "\t[Dose: First]"
+		case 2:
+			msg += "\t[Dose: Second]"
+		}
 	}
 
 	sendMessage(firstname, chatid, msg)
@@ -150,15 +158,17 @@ func removeEntries(firstname string, chatid int64) error {
 	return nil
 }
 
-func getMsgForPin(pincode int, dateStr string) string {
-	centers, _ := getCenters(pincode, dateStr)
+func getMsgForPin(pincode int, dateStr string, dose int) string {
+	centers, _ := getCenters(pincode, dateStr, dose)
 	msg := ""
 
 	for _, center := range centers {
 		msg += fmt.Sprintf("CENTER: %s\nAddress: %s\n", center.Name, center.Address)
 		for _, session := range center.Sessions {
 			msg += fmt.Sprintf("\n\tDate: %s", session.Date)
-			msg += fmt.Sprintf("\n\tSlots available: %d", session.Available)
+			msg += fmt.Sprintf("\n\tTotal slots available: %d", session.Available)
+			msg += fmt.Sprintf("\n\tDose 1 slots available: %d", session.Available1)
+			msg += fmt.Sprintf("\n\tDose 2 slots available: %d", session.Available2)
 			msg += fmt.Sprintf("\n\tAge Limit: %d", session.AgeLimit)
 			msg += fmt.Sprintf("\n\tVaccine type: %s", session.Vaccine)
 			msg += "\n"
@@ -182,7 +192,7 @@ func SendUpdates() error {
 		if !db.ShouldAlert(entry.Chatid, entry.Pincode) {
 			continue
 		}
-		msg := getMsgForPin(entry.Pincode, dateStr)
+		msg := getMsgForPin(entry.Pincode, dateStr, entry.Dose)
 		if msg != "" {
 			msg = fmt.Sprintf("SLOTS AVAILABLE FOR PIN %d\n\n", entry.Pincode) + msg
 			err = sendMessage(entry.FirstName, entry.Chatid, msg)
@@ -204,6 +214,16 @@ func showHelp(firstname string, chatid int64) error {
 	msg += "\n/list - List all pincodes registered"
 	msg += "\n/disable - Disable all alerts"
 	msg += "\n/status PINCODE - Get vaccine status immediately for a pin"
+	sendMessage(firstname, chatid, msg)
+	return nil
+}
+
+func sendUpdateError(firstname string, chatid int64) error {
+	msg := "Invalid update.\nUsage: /update PINCODE DOSE"
+	msg += "\n\nDOSE - 0, 1 or 2."
+	msg += "\n\t0 - Alert for both doses"
+	msg += "\n\t1 - Alert for first dose"
+	msg += "\n\t2 - Alert for second dose"
 	sendMessage(firstname, chatid, msg)
 	return nil
 }
@@ -253,6 +273,25 @@ func ReceiveWebhook(ctx *fasthttp.RequestCtx) error {
 			msg := "Please enter the pincode to register.\nExample: /register 742101"
 			sendMessage(firstname, chatid, msg)
 		}
+	case "/update":
+		if len(params) >= 3 {
+			i, err := strconv.Atoi(params[1])
+			j, err2 := strconv.Atoi(params[2])
+			if err != nil || err2 != nil {
+				sendUpdateError(firstname, chatid)
+				break
+			}
+			err = db.UpdateUserEntry(firstname, chatid, i, j)
+			if err == nil {
+				msg := "Updated entry\n"
+				sendMessage(firstname, chatid, msg)
+			} else {
+				msg := "Failed to update. Please try again later\n"
+				sendMessage(firstname, chatid, msg)
+			}
+		} else {
+			sendUpdateError(firstname, chatid)
+		}
 	case "/list":
 		err := listEntries(firstname, chatid)
 		if err != nil {
@@ -275,7 +314,7 @@ func ReceiveWebhook(ctx *fasthttp.RequestCtx) error {
 			}
 			currentTime := time.Now()
 			dateStr := currentTime.Format("02-01-2006")
-			msg := getMsgForPin(i, dateStr)
+			msg := getMsgForPin(i, dateStr, 0)
 
 			if msg == "" {
 				msg = "No vaccine slots found for the given pincode"
