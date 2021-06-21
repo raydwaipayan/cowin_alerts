@@ -211,6 +211,9 @@ func SendUpdates() error {
 
 func showHelp(firstname string, chatid int64) error {
 	msg := "Options:\n/register PINCODE - Register alerts for the given pin"
+	msg += "\n\tExample: /register 700001"
+	msg += "\n/update PINCODE DOSE - Change dose for which to alert"
+	msg += "\n\tExample: /update 700001 1"
 	msg += "\n/list - List all pincodes registered"
 	msg += "\n/disable - Disable all alerts"
 	msg += "\n/status PINCODE - Get vaccine status immediately for a pin"
@@ -277,7 +280,7 @@ func ReceiveWebhook(ctx *fasthttp.RequestCtx) error {
 		if len(params) >= 3 {
 			i, err := strconv.Atoi(params[1])
 			j, err2 := strconv.Atoi(params[2])
-			if err != nil || err2 != nil {
+			if err != nil || err2 != nil || j < 0 || j > 2 {
 				sendUpdateError(firstname, chatid)
 				break
 			}
